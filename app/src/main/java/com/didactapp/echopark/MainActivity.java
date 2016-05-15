@@ -4,18 +4,19 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
-import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 
 import com.apkfuns.logutils.LogUtils;
 import com.didactapp.echopark.data.EchoLocation;
 import com.didactapp.echopark.data.ParkingLocation;
+import com.didactapp.echopark.audio.WavAudioRecorder;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements
     private boolean mTransmit = false;
 
     //audio recorder stuff
-    private MediaRecorder myAudioRecorder;
+    private WavAudioRecorder myAudioRecorder;
     private final String AUDIO_FILE_NAME = "/recording.3gpp";
     private boolean mIsRecording = false;
     private boolean mReadyToTransmit = false;
@@ -101,6 +102,9 @@ public class MainActivity extends AppCompatActivity implements
         mMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mMapFragment.getMapAsync(this);
 
+        //disable screen turn off
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         //initialize sound recorder and ask for permission if neccesary
         initializeMediaRecorder();
         findParking();
@@ -113,20 +117,11 @@ public class MainActivity extends AppCompatActivity implements
             return;
         }
         //initialize media recorder
-        myAudioRecorder=new MediaRecorder();
-        //set the device microphone as the audio source
-        myAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        //set audio output encoding stuff
-        myAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        myAudioRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
+        myAudioRecorder= WavAudioRecorder.getInstance();
         //append the filename to the internal storage path - this is where the output will go
         myAudioRecorder.setOutputFile(getFilesDir()+AUDIO_FILE_NAME);
-        try {
-            myAudioRecorder.prepare();
-        }catch (IOException e){
-            LogUtils.d("IO EXCEPTION ON PREPARE MEDIA RECORDER");
-        }
-        LogUtils.d(getFilesDir() + AUDIO_FILE_NAME);
+
+        myAudioRecorder.prepare();
     }
 
     @Override
